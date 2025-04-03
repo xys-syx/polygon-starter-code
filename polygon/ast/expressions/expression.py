@@ -54,7 +54,14 @@ class Expression(Node):
         if operator == 'in' or operator == 'nin':
             if isinstance(self.args[1], Literal | Expression):
                 self.args[1] = [self.args[1]]
-
+        
+        if operator == 'if':
+            if len(self.args) != 3:
+                raise ValueError("'if' operator expects exactly 3 arguments (cond, then, else).")
+            self.condition = self.args[0]
+            self.then_expr = self.args[1]
+            self.else_expr = self.args[2]
+        
         if self.operator in _op_callable_map:
             self.operator_callable = Operator(self.operator)
         else:
@@ -103,6 +110,10 @@ class Expression(Node):
                     expression_str += f"({', '.join([str(x) for x in self.args[1]])})"
                 else:
                     expression_str += f'({self.args[1]})'
+            
+            elif str(self.operator_callable.name) == 'if':
+
+                expression_str = f"IF({self.args[0]}, {self.args[1]}, {self.args[2]})"
 
             else:
                 expression_str = f"{str(self.operator_callable.name).upper()}({', '.join([f'({arg})' if isinstance(arg, Query) else str(arg) for arg in self.args])})"

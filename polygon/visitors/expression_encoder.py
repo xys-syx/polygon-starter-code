@@ -408,6 +408,18 @@ class ExpressionEncoder:
             ])
 
             return val, Bool(False)
+        
+        elif node.operator == 'if':
+            condition_val, condition_null = node.args[0].accept(self)
+            then_val, then_null = node.args[1].accept(self)
+            else_val, else_null = node.args[2].accept(self)
+
+            condition_val = EnsureBool(condition_val)
+            val = If(And([Not(condition_null), condition_val]), then_val, else_val)
+            null = If(And([Not(condition_null), condition_val]), then_null, else_null)
+
+            return val, null
+
         elif node.operator == 'between':
             value_val, value_null = node.args[0].accept(self)
             lower_bound_val, lower_bound_null = node.args[1].accept(self)
