@@ -484,13 +484,27 @@ class ExpressionEncoder:
 
                 agg_exp_encoder = ExpressionEncoder(self.table, self.env)
                 to_be_aggregated = []
+
+                filter_node = node.agg_filter
+
                 for tuple_id in range(self.table.bound):
                     # ret is a (val, null, deleted) pair
-                    ret = (
-                        *agg_exp_encoder.expression_for_tuple(node.args[1], tuple_id),
-                        Deleted(self.table.table_id, tuple_id)
-                    )
+                    # ret = (
+                    #     *agg_exp_encoder.expression_for_tuple(node.args[1], tuple_id),
+                    #     Deleted(self.table.table_id, tuple_id)
+                    # )
+                    # to_be_aggregated.append(ret)
+                    val, null = agg_exp_encoder.expression_for_tuple(node.args[1], tuple_id)
+                    row_deleted = Deleted(self.table.table_id, tuple_id)
+
+                    if filter_node:
+                        f_val, f_null = agg_exp_encoder.expression_for_tuple(filter_node, tuple_id)
+                        f_val = EnsureBool(f_val)
+                        row_deleted = Or([row_deleted, f_null, Not(f_val)])
+                    
+                    ret = (val, null, row_deleted)
                     to_be_aggregated.append(ret)
+
 
                 match node.operator:
                     case 'max':

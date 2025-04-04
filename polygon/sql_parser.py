@@ -356,6 +356,14 @@ class SQLParser:
             group_by_clause = self.parse_group_by(query['groupby'])
             if 'having' in query:
                 group_by_clause.having = self.parse_expression(query['having'])
+                # having_dict = query['having']
+                # if isinstance(having_dict, dict) and 'value' in having_dict:
+                #     aggregator_dict = dict(having_dict['value'])
+                #     if 'filter' in having_dict:
+                #         aggregator_dict['filter'] = having_dict['filter']
+                #     group_by_clause.having = self.parse_expression(aggregator_dict)
+                # else: 
+                #     group_by_clause.having = self.parse_expression(having_dict)
 
         order_by_clause = None
         if 'orderby' in query:
@@ -381,19 +389,28 @@ class SQLParser:
                     alias = None
                     if 'name' in attr:
                         alias = attr['name']
-
-                    if isinstance(attr['value'], bool | int):
-                        target_list.append(Literal(attr['value'], alias=alias))
-                    elif isinstance(attr['value'], dict):
-                        # select target is an expression
-                        exp = self.parse_expression(attr['value'])
+                    
+                    if 'filter' in attr and isinstance(attr['value'], dict):
+                        aggregator_dict = dict(attr['value'])
+                        aggregator_dict['filter'] = attr['filter']
+                        exp = self.parse_expression(aggregator_dict)
                         exp.alias = alias
                         target_list.append(exp)
                     else:
-                        # select target is an attribute
-                        target_list.append(Attribute(attr['value'], alias=alias))
+
+                        if isinstance(attr['value'], bool | int):
+                            target_list.append(Literal(attr['value'], alias=alias))
+                        elif isinstance(attr['value'], dict):
+                            # select target is an expression
+                            exp = self.parse_expression(attr['value'])
+                            exp.alias = alias
+                            target_list.append(exp)
+                        else:
+                            # select target is an attribute
+                            target_list.append(Attribute(attr['value'], alias=alias))
                 else:
                     target_list.append(Attribute(attr))
+    
         elif isinstance(select_clause, str):
             target_list.append(Attribute(select_clause))
         elif isinstance(select_clause, dict):
@@ -492,6 +509,12 @@ class SQLParser:
         if isinstance(exp, int | bool | str | float):
             return Literal(exp)
 
+        if isinstance(exp, dict) and 'value' in exp and 'filter' in exp:
+            aggregator_dict = dict(exp['value'])
+            aggregator_dict['filter'] = exp['filter']
+
+            return self.parse_expression(aggregator_dict)
+
         # special case: DISTINCT aggregate function call
         # TODO: refactor
         if len(exp) == 2 and 'distinct' in exp:
@@ -578,12 +601,17 @@ class SQLParser:
         else:
             raise NotImplementedError(exp)
 
+        agg_filter = None
         if operator in ['max', 'min', 'sum', 'avg', 'count']:
+            #args = [False, *args]
+            if 'filter' in exp:
+                agg_filter = self.parse_expression(exp['filter'])
+
             args = [False, *args]
 
         if operator in ['add']:
             return functools.reduce(lambda x, y: Expression(operator, [x, y]), args)
-        return Expression(operator, args)
+        return Expression(operator, args, agg_filter=agg_filter)
 
     def parse_case_when(self, exp) -> CaseWhen:
         cases = []

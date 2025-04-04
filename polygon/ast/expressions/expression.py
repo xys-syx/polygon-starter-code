@@ -40,11 +40,13 @@ class Expression(Node):
     def __init__(self,
                  operator: Optional[str],
                  args: List[Literal | Attribute | Self | 'Query'],
+                 agg_filter: Optional['Expression'] = None,
                  alias: Optional[str] = None):
 
         self.operator = operator
         self.args = args
         self.alias = alias
+        self.agg_filter = agg_filter
 
         if operator == 'missing':
             self.operator = 'is_null'
@@ -85,8 +87,16 @@ class Expression(Node):
             if str(self.operator_callable.name) in ['max', 'min', 'sum', 'avg', 'count']:
                 if self.args[0]:
                     expression_str = f"{str(self.operator_callable.name).upper()}(DISTINCT {str(self.args[1])})"
+                        
                 else:
                     expression_str = f"{str(self.operator_callable.name).upper()}({str(self.args[1])})"
+                
+                if getattr(self, 'agg_filter', None):
+                    if self.args[0]:
+                        expression_str = f"({str(self.operator_callable.name).upper()}(DISTINCT {str(self.args[1])}) FILTER (WHERE {str(self.agg_filter)}))"
+                    else:
+                        expression_str = f"({str(self.operator_callable.name).upper()}({str(self.args[1])}) FILTER (WHERE {str(self.agg_filter)}))"
+            
             elif str(self.operator_callable.name) == 'in':
 
                 if isinstance(self.args[0], list):

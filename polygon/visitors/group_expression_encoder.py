@@ -259,12 +259,26 @@ class GroupExpressionEncoder:
                     val, null = agg_exp_encoder.expression_for_tuple(node.args[1], tuple_id)
                     if val.return_type() == 'Bool':
                         val = If(val, Int(1), Int(0))
-                    # ret is a (val, null, in_group) pair
-                    ret = (
-                        val,
-                        null,
-                        SMTGrouping(self.groupby_table.table_id, tuple_id, self.group_id)
-                    )
+                    
+                    if node.agg_filter:
+                        f_val, f_null = agg_exp_encoder.expression_for_tuple(node.agg_filter, tuple_id)
+                        f_val = EnsureBool(f_val)
+                        row_in_group = And([
+                                            SMTGrouping(self.groupby_table.table_id, tuple_id, self.group_id),
+                                            Not(f_null),
+                                            f_val
+                        ])
+                        #ret = (f_val, f_null, row_in_group)
+                    else: 
+                        row_in_group = SMTGrouping(self.groupby_table.table_id, tuple_id, self.group_id)
+                        # ret is a (val, null, in_group) pair
+                        # ret = (
+                        #     val,
+                        #     null,
+                        #     SMTGrouping(self.groupby_table.table_id, tuple_id, self.group_id)
+                        # )
+
+                    ret = (val, null, row_in_group)
                     to_be_aggregated.append(ret)
 
                 match node.operator:
