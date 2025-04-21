@@ -13,7 +13,7 @@ from polygon.formulas.distinct import FDistinct
 from polygon.formulas.filter import FFilter
 from polygon.formulas.group_by import FGroupBy
 from polygon.formulas.join import *
-from polygon.formulas.mutation import FMutation
+#from polygon.formulas.mutation import FMutation
 from polygon.formulas.order_by import FOrderBy
 from polygon.formulas.project import FProject
 from polygon.formulas.scan import FScan

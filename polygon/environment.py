@@ -10,7 +10,7 @@ from polygon.ast.expressions.attribute import Attribute
 from polygon.ast.expressions.literal import Literal
 from polygon.formulas.integrity_constraint import encode_integrity_constraints
 from polygon.logger import logger
-from polygon.mutation import generate_mutants
+#from polygon.mutation import generate_mutants
 from polygon.schemas import *
 from polygon.smt.ast import *
 from polygon.smt.formula import FormulaManager
