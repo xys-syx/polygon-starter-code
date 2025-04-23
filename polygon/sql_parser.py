@@ -414,7 +414,17 @@ class SQLParser:
         elif isinstance(select_clause, str):
             target_list.append(Attribute(select_clause))
         elif isinstance(select_clause, dict):
-            if 'value' in select_clause:
+            if 'value' in select_clause and 'filter' in select_clause:
+                alias = select_clause.get('name')
+                aggregator_dict = dict(select_clause['value'])
+                aggregator_dict['filter'] = select_clause['filter']
+
+                exp = self.parse_expression(aggregator_dict)
+                exp.alias = alias
+                target_list.append(exp)
+            
+            
+            elif 'value' in select_clause:
                 alias = None
                 if 'name' in select_clause:
                     alias = select_clause['name']

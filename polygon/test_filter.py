@@ -23,6 +23,10 @@ def main():
     HAVING (SUM(col_a) FILTER (WHERE col_b > 0)) > 0
     ORDER BY SUM(col_a) FILTER (WHERE col_c IS NOT NULL)
     """
+    # query_text = '''
+    #     SELECT SUM(col_a) FILTER (WHERE col_b > 10) AS total
+    #     FROM   Sales
+    # '''
     # ORDER BY SUM(col_a) FILTER (WHERE col_c IS NOT NULL)
     # GROUP BY col_c
     parser = SQLParser()

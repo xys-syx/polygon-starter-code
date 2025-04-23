@@ -43,13 +43,15 @@ def main() -> None:
 
     queries = [
         """
-        SELECT SUM(col_a) FILTER (WHERE col_b > 10) AS total
-        FROM   Sales
+        SELECT
+            SUM(col_a) FILTER (WHERE col_b > 10)
+        FROM Sales
         """,
 
         """
-        SELECT SUM(col_a) FILTER (WHERE col_b >= 10) AS total
-        FROM   Sales
+        SELECT
+            SUM(col_a) FILTER (WHERE col_b >= 10)
+        FROM Sales
         """
     ]
     parser = SQLParser()
